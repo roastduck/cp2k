@@ -91,9 +91,9 @@ case "$with_elpa" in
                           FC=${MPIFC} \
                           CC=${MPICC} \
                           CXX=${MPICXX} \
-                          FCFLAGS="${FCFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} -ffree-line-length-none" \
-                          CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS}" \
-                          CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS}" \
+                          FCFLAGS="${FCFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} -ffree-line-length-none ${AVX_flag} ${FMA_flag} ${SSE4_flag}" \
+                          CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag}" \
+                          CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag}" \
                           LDFLAGS="-Wl,--enable-new-dtags ${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags}" \
                           LIBS="${SCALAPACK_LIBS} ${MATH_LIBS}" \
                           > configure.log 2>&1
@@ -113,9 +113,9 @@ case "$with_elpa" in
                               FC=${MPIFC} \
                               CC=${MPICC} \
                               CXX=${MPICXX} \
-                              FCFLAGS="${FCFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} -ffree-line-length-none" \
-                              CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS}" \
-                              CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS}" \
+                              FCFLAGS="${FCFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} -ffree-line-length-none ${AVX_flag} ${FMA_flag} ${SSE4_flag}" \
+                              CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag}" \
+                              CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag}" \
                               LDFLAGS="-Wl,--enable-new-dtags ${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags}" \
                               LIBS="${SCALAPACK_LIBS} ${MATH_LIBS}" \
                               > configure.log 2>&1
