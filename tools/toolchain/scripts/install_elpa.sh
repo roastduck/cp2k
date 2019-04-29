@@ -71,8 +71,13 @@ case "$with_elpa" in
             # ELPA-2017xxxx enables AVX2 by default, switch off if machine doesn't support it.
             # In addition, --disable-option-checking is needed for older versions, which don't know
             # about this option.
-            has_AVX2=`grep 'avx2' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no'`
-            has_AVX512=`grep 'avx512' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no'`
+            has_AVX=`grep '\bavx\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no'`
+            [ "${has_AVX}" == "yes" ] && AVX_flag="-mavx" || AVX_flag=""
+            has_AVX2=`grep '\bavx2\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no'`
+            [ "${has_AVX2}" == "yes" ] && AVX_flag="-mavx2"
+            has_AVX512=`grep '\bavx512f\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no'`
+            FMA_flag=`grep '\bfma\b' /proc/cpuinfo 1>/dev/null && echo '-mfma' || echo '-mno-fma'`
+            SSE4_flag=`grep '\bsse4_1\b' /proc/cpuinfo 1>/dev/null && echo '-msse4' || echo '-mno-sse4'`
             # non-threaded version
             mkdir -p obj_no_thread; cd obj_no_thread
             ../configure  --prefix=${pkg_install_dir} \
