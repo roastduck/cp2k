@@ -79,7 +79,7 @@ EOF
         ;;
     __SYSTEM__)
         echo "==================== Finding Libxsmm from system paths ===================="
-        check_command libxsmm_generator "libxsmm"
+        #check_command libxsmm_generator "libxsmm" # Really need it?
         check_lib -lxsmm "libxsmm"
         check_lib -lxsmmf "libxsmm"
         add_include_from_paths LIBXSMM_CFLAGS "libxsmm.h" $INCLUDE_PATHS
