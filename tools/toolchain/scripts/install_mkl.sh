@@ -80,6 +80,10 @@ if [ "$with_mkl" != "__DONTUSE__" ] ; then
                 mkl_optional_libs="$mkl_optional_libs libmkl_blacs_openmpi_lp64.so"
                 mkl_blacs_lib="libmkl_blacs_openmpi_lp64.so"
                 ;;
+            impi)
+                mkl_optional_libs="$mkl_optional_libs libmkl_blacs_intelmpi_lp64.so"
+                mkl_blacs_lib="libmkl_blacs_intelmpi_lp64.so"
+                ;;
             *)
                 enable_mkl_scalapack="__FALSE__"
                 ;;

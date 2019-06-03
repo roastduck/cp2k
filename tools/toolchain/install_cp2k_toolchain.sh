@@ -70,7 +70,7 @@ OPTIONS:
                           --with-PKG option placed AFTER this option on the
                           command line.
 --mpi-mode                Selects which MPI flavour to use. Available options
-                          are: mpich, openmpi and no.  By selecting no, you will
+                          are: mpich, openmpi, impi and no.  By selecting no, you will
                           be disabling MPI support.  By default the script
                           will try to determine the flavour based on the MPI library
                           currently avaliable in your system path. For CRAY (CLE)
@@ -148,6 +148,8 @@ The --with-PKG options follow the rules:
                           Default = system
   --with-mpich            MPICH, MPI library like OpenMPI. one should
                           only use EITHER OpenMPI or MPICH and not both.
+                          Default = system
+  --with-impi             Intel MPI
                           Default = system
   --with-libxc            libxc, exchange-correlation library. Needed for
                           QuickStep DFT and hybrid calculations.
@@ -238,7 +240,7 @@ EOF
 # is important, the first in the list gets installed first
 # ------------------------------------------------------------------------
 tool_list="binutils lcov valgrind make cmake gcc"
-mpi_list="mpich openmpi"
+mpi_list="mpich openmpi impi"
 math_list="mkl acml openblas reflapack"
 lib_list="fftw libint libxc libsmm libxsmm scalapack elpa \
           ptscotch parmetis metis superlu pexsi quip"
@@ -283,6 +285,7 @@ with_reflapack=__INSTALL__
 # for MPI, we try to detect system MPI variant
 with_openmpi=__SYSTEM__
 with_mpich=__SYSTEM__
+with_impi=__SYSTEM__
 if (command -v mpirun >&- 2>&-) ; then
     # check if we are dealing with openmpi or mpich
     if (mpirun --version 2>&1 | grep -s -q "HYDRA") ; then
@@ -324,6 +327,7 @@ if [ "$CRAY_LD_LIBRARY_PATH" ] ; then
     # don't use the installers for the MPI libraries
     with_mpich="__DONTUSE__"
     with_openmpi="__DONTUSE__"
+    with_impi="__DONTUSE__"
     export MPI_MODE=mpich
     # set default value for some installers appropriate for CLE
     with_gcc="__DONTUSE__"
@@ -362,12 +366,15 @@ while [ $# -ge 1 ] ; do
                 openmpi)
                     export MPI_MODE=openmpi
                     ;;
+                impi)
+                    export MPI_MODE=impi
+                    ;;
                 no)
                     export MPI_MODE=no
                     ;;
                 *)
                     report_error ${LINENO} \
-                                 "--mpi-mode currently only supports openmpi, mpich and no as options"
+                                 "--mpi-mode currently only supports openmpi, mpich, impi and no as options"
                     exit 1
                     ;;
             esac
@@ -465,6 +472,12 @@ while [ $# -ge 1 ] ; do
             with_openmpi=$(read_with $1)
             if [ $with_openmpi != __DONTUSE__ ] ; then
                 export MPI_MODE=openmpi
+            fi
+            ;;
+        --with-imp*)
+            with_impi=$(read_with $1)
+            if [ $with_impi != __DONTUSE__ ] ; then
+                export MPI_MODE=impi
             fi
             ;;
         --with-libint*)
@@ -715,6 +728,16 @@ if [ "$ENABLE_CRAY" = "__TRUE__" ] ; then
                 export CP_DFLAGS="${CP_DFLAGS} IF_MPI(-D__parallel -D__MPI_VERSION=3|)"
             fi
             ;;
+        impi)
+            if [ "$with_impi" = "__DONTUSE__" ] ; then
+                add_include_from_paths MPI_CFLAGS "mpi.h" $INCLUDE_PATHS
+                add_include_from_paths MPI_LDFLAGS "libmpi.*" $LIB_PATHS
+                export MPI_CFLAGS
+                export MPI_LDFLAGS
+                export MPI_LIBS="-lmpi -lmpicxx -lmpifort"
+                export CP_DFLAGS="${CP_DFLAGS} IF_MPI(-D__parallel -D__MPI_VERSION=3|)"
+            fi
+            ;;
     esac
     check_lib -lz
     check_lib -ldl
@@ -783,6 +806,10 @@ case "$MPI_MODE" in
         ;;
     openmpi)
         "${SCRIPTDIR}"/install_openmpi.sh "${with_openmpi}"; load "${BUILDDIR}/setup_openmpi"
+        ;;
+    impi)
+        export MPICXX=mpicxx
+        "${SCRIPTDIR}"/install_impi.sh "${with_impi}"; load "${BUILDDIR}/setup_impi"
         ;;
 esac
 
@@ -874,7 +901,7 @@ PROFOPT_FLAGS="\$(PROFOPT)"
 # special flags for gfortran
 # https://gcc.gnu.org/onlinedocs/gfortran/Error-and-Warning-Options.html
 # we error out for these warnings (-Werror=uninitialized -Wno-maybe-uninitialized -> error on variables that must be used uninitialized)
-WFLAGS_ERROR="-Werror=aliasing -Werror=ampersand -Werror=c-binding-type -Werror=intrinsic-shadow -Werror=intrinsics-std -Werror=line-truncation -Werror=tabs -Werror=target-lifetime -Werror=underflow -Werror=unused-but-set-variable -Werror=unused-variable -Werror=unused-dummy-argument -Werror=conversion -Werror=zerotrip -Werror=uninitialized -Wno-maybe-uninitialized"
+WFLAGS_ERROR="-Werror=aliasing -Werror=ampersand -Werror=c-binding-type -Werror=intrinsic-shadow -Werror=intrinsics-std -Werror=line-truncation -Werror=tabs -Werror=target-lifetime -Werror=underflow -Werror=unused-but-set-variable -Werror=unused-variable -Werror=unused-dummy-argument -Werror=conversion -Werror=zerotrip -Wno-maybe-uninitialized"
 # we just warn for those (that eventually might be promoted to WFLAGSERROR). It is useless to put something here with 100s of warnings.
 WFLAGS_WARN="-Wuse-without-only"
 # while here we collect all other warnings, some we'll ignore
