@@ -22,7 +22,7 @@ def main():
     usage = "Usage: tune.py <blocksize 1> ... <blocksize N>"
     parser = OptionParser(usage)
     parser.add_option("-p", "--params", metavar="filename.txt",
-        default="parameters_P100.txt",
+        default="parameters_V100.txt",
         help="Default: %default")
 
     (options, args) = parser.parse_args(sys.argv)
@@ -47,7 +47,7 @@ def main():
             print("Found existing parameter set for %dx%dx%d, skipping."%(m,n,k))
             continue
 
-        outdir = "tune_%dx%dx%d/"%(m,n,k)
+        outdir = "/mnt/ssd/rd/autotune/tune_%dx%dx%d/"%(m,n,k)
         if(path.exists(outdir)):
             print("Directory %s exists already, skipping."%outdir)
             continue
@@ -147,31 +147,19 @@ def gen_jobfile(outdir, m, n, k):
     all_exe_src = [basename(fn) for fn in glob(outdir+t+"_*_main.cu")]
     all_exe = sorted([fn.replace("_main.cu", "") for fn in all_exe_src])
 
-    output  = "#!/bin/bash -l\n"
-    output += "#SBATCH --nodes=%d\n"%len(all_exe)
-    output += "#SBATCH --time=0:30:00\n"
-    output += "#SBATCH --account=s238\n"
-    output += "#SBATCH --partition=normal\n"
-    output += "#SBATCH --constraint=gpu\n"
-    output += "\n"
-    output += "source ${MODULESHOME}/init/sh;\n"
-    output += "module load daint-gpu\n"
-    output += "module unload PrgEnv-cray\n"
-    output += "module load PrgEnv-gnu/6.0.3\n"
-    output += "module load cudatoolkit/8.0.54_2.2.8_ga620558-2.1\n"
-    output += "module list\n"
-    output += "export CRAY_CUDA_MPS=1\n"
-    output += "cd $SLURM_SUBMIT_DIR \n"
-    output += "\n"
+    output  = "#!/bin/bash\n"
+    output += "source /etc/profile.d/modules.sh\n"
+    output += "source /opt/spack/spack-avx512/share/spack/setup-env.sh\n"
+    output += "spack load gcc@7.3.0\n"
+    output += "spack load cuda@10.0.130\n"
+    output += "spack load \"openmpi@3.1.3+cuda%gcc@8.2.0 fabrics=verbs,ucx\"\n"
     output += "date\n"
     for exe in all_exe:
-        output += "srun --nodes=1 --bcast=/tmp/${USER} --ntasks=1 --ntasks-per-node=1 --cpus-per-task=12 make -j 24 %s &\n"%exe
-    output += "wait\n"
+        output += "make -j 112 %s\n"%exe
     output += "date\n"
     output += "\n"
     for exe in all_exe:
-        output += "srun --nodes=1 --bcast=/tmp/${USER} --ntasks=1 --ntasks-per-node=1 --cpus-per-task=1 ./"+exe+" >"+exe+".log 2>&1 & \n"
-    output += "wait\n"
+        output += "./"+exe+" >"+exe+".log 2>&1\n"
     output += "date\n"
     output += "\n"
     output += "echo Over all winner:\n"
@@ -199,7 +187,7 @@ def gen_makefile(outdir):
 
     headers = " ".join( ["."+fn for fn in glob("./kernels/*.h")] )
     output += "%.o : %.cu "+headers+"\n"
-    output += "\tnvcc -O3 -arch=sm_60 -w -c $<\n\n"
+    output += "\tnvcc -O3 -arch=sm_70 -w -c $<\n\n"
 
     for exe_src in all_exe_src:
         absparts = sorted(glob(outdir+"/"+exe_src.replace("_main.cu", "_part*")))
@@ -208,7 +196,7 @@ def gen_makefile(outdir):
         deps_obj = " ".join([fn.replace(".cu", ".o") for fn in deps])
         exe = exe_src.replace("_main.cu", "")
         output += exe + " : " + deps_obj +"\n"
-        output += "\tnvcc -O3 -arch=sm_60 -w -o $@ $^\n\n"
+        output += "\tnvcc -O3 -arch=sm_70 -w -o $@ $^\n\n"
 
     writefile(outdir+"/Makefile", output)
 

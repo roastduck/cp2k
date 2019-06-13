@@ -36,11 +36,12 @@ def main(argv):
     #triples += combinations(5,13,16,32)
     triples += combinations(6,7,8)
     triples += combinations(13,14,25,26,32)
+    triples += combinations(4,5,6,7,8,9,10,13,15,25,26,28,32,45)
 
     usage = "Generator of LibCuSMM. The Library for Cuda Small Matrix Multiplications."
     parser = OptionParser(usage)
     parser.add_option("-p", "--params", metavar="filename.txt",
-        default="parameters_P100.txt",
+        default="parameters_V100.txt",
         help="Default: %default")
 
     (options, args) = parser.parse_args(argv)
@@ -67,8 +68,8 @@ def make_plan(triples, param_fn):
             plan[(m,n,k)] = possible_kernels[0]
         elif(len(possible_kernels) > 1):
             raise(Exception("found more than one kernel for %dx%dx%d"%(m,n,k)))
-        else:
-            raise(Exception("missing kernel parameters for %dx%dx%d"%(m,n,k)))
+        #else:
+            #raise(Exception("missing kernel parameters for %dx%dx%d"%(m,n,k)))
 
     return(plan)
 

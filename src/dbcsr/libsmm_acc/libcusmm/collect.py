@@ -20,7 +20,7 @@ re_errors = re.compile("Number of errors: (\d+)\n")
 def main():
     winners = dict()
 
-    for d in glob("tune_*"):
+    for d in glob("/mnt/ssd/rd/autotune/tune_*"):
         if(not path.isdir(d)):
             continue
 
