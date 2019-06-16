@@ -163,6 +163,7 @@ MODULE qs_scf
    USE qs_wf_history_methods,           ONLY: wfi_purge_history,&
                                               wfi_update
    USE scf_control_types,               ONLY: scf_control_type
+   USE mpi
 #include "./base/base_uses.f90"
 
    IMPLICIT NONE
@@ -319,7 +320,7 @@ CONTAINS
 
       CHARACTER(LEN=default_string_length)               :: description, name
       INTEGER :: ext_master_id, external_comm, handle, handle2, i_tmp, iatom, ic, ispin, &
-         iter_count, output_unit, scf_energy_message_tag, total_steps
+         iter_count, output_unit, scf_energy_message_tag, total_steps, thu_rank, thu_error
       LOGICAL :: diis_step, do_kpoints, energy_only, exit_inner_loop, exit_outer_loop, &
          inner_loop_converged, just_energy, outer_loop_converged
       REAL(KIND=dp)                                      :: t1, t2
@@ -341,6 +342,8 @@ CONTAINS
       TYPE(qs_ks_env_type), POINTER                      :: ks_env
       TYPE(qs_rho_type), POINTER                         :: rho
       TYPE(section_vals_type), POINTER                   :: dft_section, input, scf_section
+
+      CALL mpi_comm_rank(MPI_COMM_WORLD, thu_rank, thu_error)
 
       CALL timeset(routineN, handle)
 
@@ -418,11 +421,19 @@ CONTAINS
 
       scf_outer_loop: DO
 
+         IF (thu_rank .eq. 0) THEN
+            write(0,*) "echo THU:A"
+         END IF
+
          CALL init_scf_loop(scf_env=scf_env, qs_env=qs_env, &
                             scf_section=scf_section)
 
          CALL qs_scf_set_loop_flags(scf_env, diis_step, &
                                     energy_only, just_energy, exit_inner_loop)
+
+         IF (thu_rank .eq. 0) THEN
+            write(0,*) "echo THU:B"
+         END IF
 
          scf_loop: DO
 
